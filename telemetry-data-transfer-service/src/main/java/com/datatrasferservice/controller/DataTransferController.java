@@ -25,7 +25,7 @@ public class DataTransferController {
   @PostMapping(value = "/sendData")
   public ResponseEntity<Object> dataReceive() {
 
-    File file = new File("/Users/dhruvpatel/Documents/personal/cars.csv");
+    File file = new File("/Users/dhruvpatel/Documents/personal/car data.csv");
 
     Object message = null;
     try (CSVReader csvReader = new CSVReader(new FileReader(file))) {
