@@ -2,6 +2,7 @@ package com.telemetrydataservice.process;
 
 import com.telemetrydataservice.serdes.VehicleDeserializer;
 import com.telemetrydataservice.serdes.VehicleSerializer;
+import lombok.Value;
 import org.apache.kafka.common.serialization.Deserializer;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
@@ -27,16 +28,19 @@ import java.util.Map;
 public class TelemetryStreamProcessor {
 
 
+    @Value("${kafka.topic.data-structured-telemetry}")
+    private String targetTopic;
+
     @Bean
     public KStream processStrem(StreamsBuilder streamsBuilder) throws Exception {
-         //  StreamsBuilder builder = new StreamsBuilder();
 
+        VehicleDTO vehicleDTO = new VehicleDTO();
 
         KStream<String,VehicleDTO> stream = streamsBuilder
                 .stream("data-collection-telemetry" , Consumed.with(Serdes.String(), getSreamRequestSerde()));
 
-        stream.filter((key, data) -> Integer.parseInt(data.getSpeed()) > 100 || data.getHarshBreaking().equalsIgnoreCase("yes") || data.getHarshAcceleration().equalsIgnoreCase("yes") || data.getEngineCheck().equalsIgnoreCase("yes") || data.getTyreCheck().equalsIgnoreCase("yes"))
-                .to("data-structured-telemetry", Produced.with(Serdes.String(), new JsonSerde<>(VehicleDTO.class)));
+        //stream.filter((key, data) -> Integer.parseInt(data.getSpeed()) > 100 || data.getHarshBreaking().equalsIgnoreCase("yes") || data.getHarshAcceleration().equalsIgnoreCase("yes") || data.getEngineCheck().equalsIgnoreCase("yes") || data.getTyreCheck().equalsIgnoreCase("yes"))
+          //      .to("data-structured-telemetry", Produced.with(Serdes.String(), new JsonSerde<>(VehicleDTO.class)));
        // stream.filter((key, data) -> data.getHarshBreaking().equalsIgnoreCase("yes"))
          //       .to("data-structured-telemetry", Produced.with(Serdes.String(), new JsonSerde<>(VehicleDTO.class)));
         //stream.filter((key, data) -> data.getHarshAcceleration().equalsIgnoreCase("yes"))
@@ -45,8 +49,35 @@ public class TelemetryStreamProcessor {
           //      .to("data-structured-telemetry", Produced.with(Serdes.String(), new JsonSerde<>(VehicleDTO.class)));
         //stream.filter((key, data) -> data.getTyreCheck().equalsIgnoreCase("yes"))
           //      .to("data-structured-telemetry", Produced.with(Serdes.String(), new JsonSerde<>(VehicleDTO.class)));
+        //return stream;
 
-        return stream;
+        KStream<String, VehicleDTO> filteredStream = stream.filter((key, data) -> checkConditions(data));
+
+        // Send the filtered stream to the target topic
+        filteredStream.to("data-structured-telemetry", Produced.with(Serdes.String(), new JsonSerde<>(VehicleDTO.class)));
+
+        return filteredStream;
+    }
+
+
+    private boolean checkConditions(VehicleDTO data) {
+        if (Integer.parseInt(data.getSpeed()) > 100) {
+            data.setAlertMessage("Over speeding");
+            return true;
+        } else if (data.getHarshBreaking().equalsIgnoreCase("yes")) {
+            data.setAlertMessage("Harsh breaking");
+            return true;
+        } else if (data.getHarshAcceleration().equalsIgnoreCase("yes")) {
+            data.setAlertMessage("Harsh acceleration");
+            return true;
+        } else if (data.getEngineCheck().equalsIgnoreCase("yes")) {
+            data.setAlertMessage("Please check engine; it requires service");
+            return true;
+        } else if (data.getTyreCheck().equalsIgnoreCase("yes")) {
+            data.setAlertMessage("Please check tyre");
+            return true;
+        }
+        return false; // No condition met
     }
 
     private Serde<VehicleDTO> getSreamRequestSerde() {

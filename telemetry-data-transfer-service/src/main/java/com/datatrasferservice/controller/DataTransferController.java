@@ -6,6 +6,7 @@ import com.datatrasferservice.service.DataTransferService;
 import com.opencsv.CSVReader;
 import com.opencsv.exceptions.CsvValidationException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -53,6 +54,8 @@ public class DataTransferController {
         vehicle.setHarshAcceleration(nextLine[10]);
         vehicle.setEngineCheck(nextLine[11]);
         vehicle.setTyreCheck(nextLine[12]);
+        vehicle.setAlertMessage("");
+
         System.out.println(vehicle.getUserName());
 
         message= dataTransferServiceService.produce(vehicle);
@@ -66,17 +69,6 @@ public class DataTransferController {
       System.out.println("IO Exception");
         throw new RuntimeException(e);
     }
-
-
-      // VehicleDTO vehicleDTO = new VehicleDTO();
-    //vehicleDTO.setId(1L);
-    //vehicleDTO.setVehicleName("skoda");
-    //vehicleDTO.setVehicleType("suv");
-    //vehicleDTO.setVehicleNumber("GJ08CM2056");
-    //vehicleDTO.setVin("123456789098765");
-    //vehicleDTO.setSpeed(80L);
-    //vehicleDTO.setUserName("dhruv")
-
     return ResponseEntity.accepted().body(message);
   }
 

@@ -19,4 +19,5 @@ public class VehicleDTO {
     private String harshAcceleration;
     private String engineCheck;
     private String tyreCheck;
+    private String alertMessage;
 }
